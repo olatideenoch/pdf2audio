@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Audio Converter | Convert PDF to MP3</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-file-audio me-2"></i>PDF2Audio
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('index') }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#how-it-works">How It Works</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact">Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1 class="hero-title">Convert PDF to Audio Instantly</h1>
+            <p class="hero-subtitle">Transform your documents, books, and PDFs into high-quality audio files. Listen on the go with our easy-to-use converter.</p>
+            <a href="#converter" class="btn btn-light btn-lg px-5 py-3 mt-3">
+                <i class="fas fa-play-circle me-2"></i>Start Converting Now
+            </a>
+        </div>
+    </section>
+
+    <!-- Main Converter Section -->
+    <section id="converter" class="container">
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active">
+                <div class="step-circle">1</div>
+                <div class="step-label">Input</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">2</div>
+                <div class="step-label">Extract</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">3</div>
+                <div class="step-label">Convert</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">4</div>
+                <div class="step-label">Download</div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h4 class="mb-0"><i class="fas fa-file-audio me-2"></i>PDF to Audio Converter</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Input Method Selection -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="inputMethod" id="textInput" checked>
+                                    <label class="form-check-label fw-bold" for="textInput">
+                                        <i class="fas fa-keyboard me-2"></i>Enter Text Directly
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="inputMethod" id="pdfUpload">
+                                    <label class="form-check-label fw-bold" for="pdfUpload">
+                                        <i class="fas fa-file-pdf me-2"></i>Upload PDF File
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Text Input Area -->
+                        <div id="textInputArea">
+                            <div class="mb-4">
+                                <label for="textArea" class="form-label fw-bold">Enter your text here:</label>
+                                <textarea class="form-control text-area" id="textArea" name="text" rows="6" placeholder="Paste or type the text you want to convert to audio...">{{ text if text else '' }}</textarea>
+                                <div class="mt-2 text-end">
+                                    <small class="text-muted" id="charCount">0 characters</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PDF Upload Area -->
+                        <div id="pdfUploadArea" class="d-none">
+                            <div class="file-upload-area" id="dropArea">
+                                <div class="file-upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <h5>Drag & Drop your PDF file here</h5>
+                                <p class="text-muted">or click to browse</p>
+                                <input type="file" id="pdfFile" name="pdf_file" class="d-none" accept=".pdf">
+                                <button type="button" class="btn btn-outline-primary mt-3" onclick="document.getElementById('pdfFile').click()">
+                                    <i class="fas fa-folder-open me-2"></i>Choose PDF File
+                                </button>
+                                <p class="mt-3 mb-0 small text-muted">Maximum file size: 10MB</p>
+                            </div>
+                            <div class="mt-3" id="fileInfo" style="display: none;">
+                                <div class="alert alert-info d-flex align-items-center">
+                                    <i class="fas fa-file-pdf me-3 fs-4"></i>
+                                    <div>
+                                        <strong id="fileName"></strong>
+                                        <div class="small" id="fileSize"></div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-auto" onclick="removeFile()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Language Info Tooltip -->
+                        <div class="alert alert-info mt-2">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> Select the language that matches your document's text. 
+                            This feature reads text aloud, it does not translate text.
+                        </div>
+
+                        <!-- Language Selection -->
+                        <div class="row mb-4">
+                            <div class="col-md-12 mb-3">
+                                <label for="languageSelect" class="form-label fw-bold">
+                                    <i class="fas fa-language me-2"></i>Language
+                                </label>
+                                <select class="form-select" id="languageSelect" name="language">
+                                    <option value="en" {% if language == 'en' %}selected{% endif %}>English</option>
+                                    <option value="es" {% if language == 'es' %}selected{% endif %}>Spanish</option>
+                                    <option value="fr" {% if language == 'fr' %}selected{% endif %}>French</option>
+                                    <option value="de" {% if language == 'de' %}selected{% endif %}>German</option>
+                                    <option value="it" {% if language == 'it' %}selected{% endif %}>Italian</option>
+                                    <option value="pt" {% if language == 'pt' %}selected{% endif %}>Portuguese</option>
+                                    <option value="zh" {% if language == 'zh' %}selected{% endif %}>Chinese</option>
+                                    <option value="ja" {% if language == 'ja' %}selected{% endif %}>Japanese</option>
+                                    <option value="ko" {% if language == 'ko' %}selected{% endif %}>Korean</option>
+                                    <option value="hi" {% if language == 'hi' %}selected{% endif %}>Hindi</option>
+                                    <option value="ru" {% if language == 'ru' %}selected{% endif %}>Russian</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Gender Selection -->
+                        <div class="row mb-4">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-user me-2"></i>Voice Gender
+                                </label>
+                                <div class="d-flex flex-wrap gap-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="voiceGender" id="maleVoice" value="male" checked>
+                                        <label class="form-check-label" for="maleVoice">
+                                            <i class="fas fa-male me-1"></i> Male Voice
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="voiceGender" id="femaleVoice" value="female">
+                                        <label class="form-check-label" for="femaleVoice">
+                                            <i class="fas fa-female me-1"></i> Female Voice
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="voiceGender" id="defaultVoice" value="default">
+                                        <label class="form-check-label" for="defaultVoice">
+                                            <i class="fas fa-robot me-1"></i> Default Voice
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="row mt-4 g-3" id="actionButtonsRow">
+                            <div class="col-md-4 d-none" id="extractBtnCol">
+                                <button class="btn btn-warning w-100 py-2" id="extractBtn">
+                                    <i class="fas fa-file-extract me-2"></i>
+                                    <strong>Extract Text</strong><br>
+                                    <small>From PDF</small>
+                                </button>
+                            </div>
+                            <div class="col-md-6" id="playPreviewBtnCol">
+                                <button class="btn btn-info w-100 py-2 text-white" id="playPreviewBtn">
+                                    <i class="fas fa-headphones me-2"></i>
+                                    <strong>Play Preview</strong><br>
+                                    <small>Listen Now</small>
+                                </button>
+                            </div>
+                            <div class="col-md-6" id="downloadBtnCol">
+                                <button class="btn btn-primary w-100 py-2" id="downloadBtn" disabled>
+                                    <i class="fas fa-download me-2"></i>
+                                    <strong>Download</strong><br>
+                                    <small>MP3 File</small>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Extracted Text Preview -->
+                        <div class="mt-5" id="extractedTextSection" style="display: none;">
+                            <h5 class="mb-3"><i class="fas fa-file-alt me-2"></i>Extracted Text Preview</h5>
+                            <div class="preview-text" id="extractedText">
+                                <!-- Extracted text will appear here -->
+                            </div>
+                            <div class="mt-3 text-end">
+                                <small class="text-muted" id="extractedCharCount">0 characters extracted</small>
+                            </div>
+                        </div>
+
+                        <!-- Audio Player -->
+                        <div class="mt-5" id="audioPlayerSection" style="display: none;">
+                            <h5 class="mb-3"><i class="fas fa-music me-2"></i>Generated Audio Preview</h5>
+                            <audio controls class="audio-player" id="audioPlayer">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <div class="mt-3">
+                                <button class="btn btn-outline-success btn-sm" id="playBtn">
+                                    <i class="fas fa-play me-1"></i>Play
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm ms-1" id="pauseBtn">
+                                    <i class="fas fa-pause me-1"></i>Pause
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Processing Indicator -->
+                        <div id="processingIndicator" class="text-center mt-4" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2" id="processingText">Processing...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="how-it-works-section">
+        <div class="container">
+            <h2 class="text-center mb-5">How It Works</h2>
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <h5>1. Upload or Enter Text</h5>
+                        <p class="text-muted">Upload your PDF file or directly enter the text you want to convert.</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h5>2. Extract Text</h5>
+                        <p class="text-muted">Our system extracts text from your PDF with high accuracy.</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-wave-square"></i>
+                        </div>
+                        <h5>3. Convert to Audio</h5>
+                        <p class="text-muted">Choose language and voice, then convert text to natural-sounding audio.</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <h5>4. Download & Enjoy</h5>
+                        <p class="text-muted">Download your MP3 file and listen anywhere, anytime.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="container mb-5">
+        <h2 class="text-center mb-5">Why Choose PDF2Audio?</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-bolt feature-icon mb-3"></i>
+                        <h5>Fast Conversion</h5>
+                        <p>Convert PDF to audio in seconds with our optimized processing engine.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-language feature-icon mb-3"></i>
+                        <h5>Multiple Languages</h5>
+                        <p>Support for various languages and natural-sounding voices.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-shield-alt feature-icon mb-3"></i>
+                        <h5>Secure & Private</h5>
+                        <p>Your documents are processed securely and deleted after conversion.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h4 class="mb-3">
+                        <i class="fas fa-file-audio me-2"></i>PDF2Audio
+                    </h4>
+                    <p>Converting documents to audio has never been easier. Transform your reading experience with our powerful text-to-speech converter.</p>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5 class="mb-3">Quick Links</h5>
+                    <div class="footer-links d-flex flex-column">
+                        <a href="{{ url_for('index') }}" class="mb-2">Home</a>
+                        <a href="#how-it-works" class="mb-2">How It Works</a>
+                        <a href="#features" class="mb-2">Features</a>
+                        <a href="#contact" class="mb-2">Contact</a>
+                    </div>
+                </div>
+                <div class="col-lg-3 mb-4">
+                    <h5 class="mb-3" id="contact">Contact Us</h5>
+                    <p><i class="fas fa-envelope me-2"></i> olatideenoch1440@gmail.com</p>
+                    <div class="social-links mt-3">
+                        <a href="#" class="text-white me-3"><i class="fab fa-twitter fa-lg"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-facebook fa-lg"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-github fa-lg"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="mt-4 mb-3" style="border-color: rgba(255,255,255,0.1);">
+            <div class="text-center">
+                <p class="mb-0">&copy; {{ current_year }} PDF2Audio. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>

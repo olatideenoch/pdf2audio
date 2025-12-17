@@ -1,0 +1,5 @@
+Flask==3.0.3
+gunicorn==23.0.0
+gTTS==2.5.3
+PyPDF2==3.0.1
+pydub==0.25.1
