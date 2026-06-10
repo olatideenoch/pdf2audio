@@ -1,32 +1,1552 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF to Audio Converter | Convert PDF to MP3</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>PDF2Audio — Convert PDF to Speech</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+
+        /* ============================================================
+           THEME TOKENS
+        ============================================================ */
+
+        :root,
+        [data-theme="dark"] {
+
+            /* Palette */
+            --primary:        #fb923c;
+            --primary-light:  #fdba74;
+            --primary-dim:    rgba(251, 146, 60, 0.10);
+            --primary-glow:   rgba(251, 146, 60, 0.28);
+            --accent:         #2dd4bf;
+            --accent-dim:     rgba(45, 212, 191, 0.10);
+
+            /* Backgrounds */
+            --bg-base:        #111008;
+            --bg-card:        #1a1610;
+            --bg-elevated:    #221c10;
+            --bg-input:       #15120a;
+            --bg-nav:         rgba(17, 16, 8, 0.92);
+
+            /* Text */
+            --text-heading:   #fff8f0;
+            --text-main:      #e8d9c4;
+            --text-muted:     #8a7360;
+
+            /* Borders */
+            --border:         rgba(251, 146, 60, 0.14);
+            --border-subtle:  rgba(251, 146, 60, 0.07);
+
+            /* Misc */
+            --shadow-deep:    rgba(0, 0, 0, 0.70);
+            --shadow-card:    rgba(0, 0, 0, 0.50);
+            --hero-bg:        #0e0b04;
+        }
+
+        [data-theme="light"] {
+
+            --primary:        #ea6c1a;
+            --primary-light:  #f59448;
+            --primary-dim:    rgba(234, 108, 26, 0.09);
+            --primary-glow:   rgba(234, 108, 26, 0.22);
+            --accent:         #0d9488;
+            --accent-dim:     rgba(13, 148, 136, 0.09);
+
+            --bg-base:        #fdf8f3;
+            --bg-card:        #ffffff;
+            --bg-elevated:    #fef3e8;
+            --bg-input:       #fffaf5;
+            --bg-nav:         rgba(255, 253, 248, 0.96);
+
+            --text-heading:   #1c0f00;
+            --text-main:      #3d2b14;
+            --text-muted:     #8a6a42;
+
+            --border:         rgba(234, 108, 26, 0.18);
+            --border-subtle:  rgba(234, 108, 26, 0.08);
+
+            --shadow-deep:    rgba(120, 60, 0, 0.12);
+            --shadow-card:    rgba(120, 60, 0, 0.08);
+            --hero-bg:        #1c1205;
+        }
+
+
+        /* ============================================================
+           RESET & BASE
+        ============================================================ */
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            overflow-x: hidden;
+            line-height: 1.65;
+        }
+
+        /* Subtle radial ambient light */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 65% 45% at 80% 8%,  rgba(251,146,60,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 55% 40% at 10% 80%, rgba(45,212,191,0.04)  0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Smooth transitions when switching theme */
+        body,
+        .navbar,
+        .converter-card,
+        .how-card,
+        .feat-card,
+        .player-box,
+        .extracted-box,
+        .drop-zone,
+        .file-card,
+        .method-btn,
+        .gender-pill,
+        .form-control,
+        .form-select,
+        footer {
+            transition:
+                background-color 0.35s ease,
+                border-color     0.30s ease,
+                color            0.20s ease,
+                box-shadow       0.35s ease;
+        }
+
+
+        /* ============================================================
+           TYPOGRAPHY HELPERS
+        ============================================================ */
+
+        .font-display { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-mono    { font-family: 'Space Mono', monospace; }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--primary-light);
+        }
+
+        .section-label {
+            display: block;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.70rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .section-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+            color: var(--text-heading);
+            letter-spacing: -1.5px;
+            text-align: center;
+            margin-bottom: 52px;
+            line-height: 1.1;
+        }
+
+        .section-title span {
+            color: var(--primary);
+        }
+
+
+        /* ============================================================
+           NAVBAR
+        ============================================================ */
+
+        .navbar {
+            background: var(--bg-nav);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: var(--primary) !important;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .brand-mark {
+            width: 36px;
+            height: 36px;
+            background: var(--primary-dim);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.05rem;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .nav-link {
+            color: var(--text-muted) !important;
+            font-weight: 600;
+            font-size: 0.87rem;
+            padding: 6px 14px !important;
+            border-radius: 7px;
+            transition: color 0.2s, background 0.2s;
+            text-decoration: none;
+        }
+
+        .nav-link:hover {
+            color: var(--primary) !important;
+            background: var(--primary-dim);
+        }
+
+        .navbar-toggler {
+            border-color: var(--border);
+            padding: 6px 10px;
+        }
+
+        .navbar-toggler-icon {
+            filter: invert(65%) sepia(30%) saturate(800%) hue-rotate(340deg);
+        }
+
+        [data-theme="light"] .navbar-toggler-icon {
+            filter: invert(45%) sepia(30%) saturate(800%) hue-rotate(10deg);
+        }
+
+        /* Theme toggle button */
+        .theme-btn {
+            background: var(--primary-dim);
+            border: 1.5px solid var(--border);
+            color: var(--primary);
+            border-radius: 50px;
+            padding: 6px 16px;
+            font-size: 0.82rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+            margin-left: 8px;
+            transition: all 0.25s;
+        }
+
+        .theme-btn:hover {
+            box-shadow: 0 4px 16px var(--primary-glow);
+            transform: translateY(-1px);
+        }
+
+
+        /* ============================================================
+           HERO
+        ============================================================ */
+
+        .hero {
+            background: var(--hero-bg);
+            padding: 130px 0 100px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Vinyl record decorative ring — bottom right */
+        .hero::before {
+            content: '';
+            position: absolute;
+            right: -120px;
+            bottom: -120px;
+            width: 420px;
+            height: 420px;
+            border-radius: 50%;
+            border: 1px solid rgba(251,146,60,0.08);
+            box-shadow:
+                inset 0 0 0 40px  rgba(251,146,60,0.03),
+                inset 0 0 0 80px  rgba(251,146,60,0.02),
+                inset 0 0 0 120px rgba(251,146,60,0.015),
+                inset 0 0 0 160px rgba(251,146,60,0.01);
+        }
+
+        /* Vinyl ring — top left */
+        .hero::after {
+            content: '';
+            position: absolute;
+            left: -80px;
+            top: -80px;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 1px solid rgba(251,146,60,0.06);
+            box-shadow:
+                inset 0 0 0 30px rgba(251,146,60,0.02),
+                inset 0 0 0 60px rgba(251,146,60,0.015);
+        }
+
+        .hero-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(251,146,60,0.10);
+            border: 1px solid rgba(251,146,60,0.22);
+            border-radius: 100px;
+            padding: 7px 18px;
+            margin-bottom: 28px;
+        }
+
+        .hero-badge .pulse-dot {
+            width: 7px;
+            height: 7px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: dotPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes dotPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.3; transform: scale(0.75); }
+        }
+
+        .hero h1 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: clamp(2.4rem, 5.5vw, 4rem);
+            color: #fff8f0;
+            letter-spacing: -2.5px;
+            line-height: 1.06;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 em {
+            font-style: normal;
+            color: var(--primary);
+        }
+
+        .hero .hero-sub {
+            font-size: 1.05rem;
+            color: rgba(232, 200, 160, 0.65);
+            max-width: 540px;
+            margin: 0 auto 38px;
+            line-height: 1.8;
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--primary);
+            color: #1c0f00;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 0.95rem;
+            padding: 14px 34px;
+            border-radius: 10px;
+            text-decoration: none;
+            box-shadow: 0 6px 24px var(--primary-glow);
+            transition: all 0.25s;
+        }
+
+        .hero-cta:hover {
+            background: #fdba74;
+            color: #1c0f00;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px var(--primary-glow);
+        }
+
+        /* Animated waveform bars */
+        .waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 48px;
+            opacity: 0.30;
+        }
+
+        .waveform span {
+            width: 3px;
+            background: var(--primary);
+            border-radius: 3px;
+            animation: waveAnim 1.5s ease-in-out infinite;
+        }
+
+        .waveform span:nth-child(1)  { height: 10px;  animation-delay: 0.0s; }
+        .waveform span:nth-child(2)  { height: 18px;  animation-delay: 0.1s; }
+        .waveform span:nth-child(3)  { height: 28px;  animation-delay: 0.2s; }
+        .waveform span:nth-child(4)  { height: 40px;  animation-delay: 0.3s; }
+        .waveform span:nth-child(5)  { height: 52px;  animation-delay: 0.4s; }
+        .waveform span:nth-child(6)  { height: 62px;  animation-delay: 0.5s; }
+        .waveform span:nth-child(7)  { height: 52px;  animation-delay: 0.6s; }
+        .waveform span:nth-child(8)  { height: 40px;  animation-delay: 0.7s; }
+        .waveform span:nth-child(9)  { height: 28px;  animation-delay: 0.8s; }
+        .waveform span:nth-child(10) { height: 18px;  animation-delay: 0.9s; }
+        .waveform span:nth-child(11) { height: 10px;  animation-delay: 1.0s; }
+
+        @keyframes waveAnim {
+            0%, 100% { transform: scaleY(1);    opacity: 1;   }
+            50%       { transform: scaleY(0.28); opacity: 0.4; }
+        }
+
+        /* Smooth page-scroll transition from hero into body */
+        .hero-fade {
+            height: 64px;
+            background: linear-gradient(to bottom, var(--hero-bg), var(--bg-base));
+        }
+
+
+        /* ============================================================
+           STEP TRACKER
+        ============================================================ */
+
+        .step-track {
+            display: flex;
+            align-items: center;
+            max-width: 540px;
+            margin: 0 auto 52px;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .step-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(251,146,60,0.07);
+            border: 2px solid rgba(251,146,60,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: rgba(251,146,60,0.30);
+            margin-bottom: 8px;
+            transition: all 0.35s;
+        }
+
+        .step-item.active .step-circle {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #1c0f00;
+            box-shadow: 0 0 0 7px var(--primary-dim);
+        }
+
+        .step-item.done .step-circle {
+            background: rgba(251,146,60,0.12);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .step-lbl {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.25s;
+        }
+
+        .step-item.active .step-lbl {
+            color: var(--primary);
+        }
+
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: rgba(251,146,60,0.12);
+            margin-bottom: 28px;
+            transition: background 0.35s;
+        }
+
+        .step-line.filled {
+            background: var(--primary);
+        }
+
+
+        /* ============================================================
+           CONVERTER CARD
+        ============================================================ */
+
+        .main-section {
+            position: relative;
+            z-index: 1;
+            padding: 64px 0 90px;
+        }
+
+        .converter-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 12px 56px var(--shadow-card);
+        }
+
+        /* Top gradient banner */
+        .card-banner {
+            background: linear-gradient(135deg, #c2550a 0%, #9a3d06 100%);
+            padding: 24px 36px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        [data-theme="light"] .card-banner {
+            background: linear-gradient(135deg, #ea6c1a 0%, #c2550a 100%);
+        }
+
+        .banner-icon {
+            width: 42px;
+            height: 42px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .banner-text h4 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: #fff;
+            margin: 0;
+            letter-spacing: -0.3px;
+        }
+
+        .banner-text p {
+            font-size: 0.82rem;
+            color: rgba(255,220,170,0.70);
+            margin: 2px 0 0;
+        }
+
+        .card-body-inner {
+            padding: 38px 40px;
+        }
+
+        @media (max-width: 600px) {
+            .card-body-inner {
+                padding: 26px 22px;
+            }
+
+            .card-banner {
+                padding: 20px 22px;
+            }
+        }
+
+
+        /* ============================================================
+           INPUT METHOD TOGGLE
+        ============================================================ */
+
+        .method-toggle {
+            display: flex;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            padding: 5px;
+            gap: 5px;
+            margin-bottom: 34px;
+        }
+
+        .method-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 9px;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: #1c0f00;
+            box-shadow: 0 4px 16px var(--primary-glow);
+        }
+
+        .method-btn:not(.active):hover {
+            background: var(--primary-dim);
+            color: var(--primary);
+        }
+
+
+        /* ============================================================
+           FORM ELEMENTS
+        ============================================================ */
+
+        .field-label {
+            display: block;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 9px;
+        }
+
+        .form-control,
+        .form-select {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-main);
+            padding: 13px 16px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            width: 100%;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+            opacity: 0.55;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-dim);
+            background: var(--bg-input);
+            color: var(--text-main);
+        }
+
+        .form-select option {
+            background: var(--bg-card);
+            color: var(--text-main);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 164px;
+            line-height: 1.7;
+        }
+
+        .char-counter {
+            text-align: right;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.70rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+
+        /* ============================================================
+           DROP ZONE
+        ============================================================ */
+
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 14px;
+            background: var(--primary-dim);
+            padding: 52px 28px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(251,146,60,0.07);
+        }
+
+        .drop-icon {
+            width: 72px;
+            height: 72px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.9rem;
+            color: var(--primary);
+            margin: 0 auto 20px;
+        }
+
+        .drop-zone h5 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-heading);
+            margin-bottom: 6px;
+        }
+
+        .drop-zone p {
+            color: var(--text-muted);
+            font-size: 0.87rem;
+            margin-bottom: 22px;
+        }
+
+        .btn-browse {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: transparent;
+            border: 1.5px solid var(--primary);
+            color: var(--primary);
+            border-radius: 8px;
+            padding: 9px 22px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-browse:hover {
+            background: var(--primary-dim);
+        }
+
+        .drop-note {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            margin: 14px 0 0;
+        }
+
+
+        /* ============================================================
+           FILE INFO CARD
+        ============================================================ */
+
+        .file-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 18px;
+        }
+
+        .file-icon {
+            width: 46px;
+            height: 46px;
+            background: rgba(220, 50, 50, 0.10);
+            border: 1px solid rgba(220, 50, 50, 0.20);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: #e05050;
+            flex-shrink: 0;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-heading);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .btn-remove {
+            background: rgba(220,50,50,0.08);
+            border: 1px solid rgba(220,50,50,0.18);
+            color: #e05050;
+            border-radius: 7px;
+            padding: 7px 11px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-remove:hover {
+            background: rgba(220,50,50,0.18);
+        }
+
+
+        /* ============================================================
+           INFO BANNER
+        ============================================================ */
+
+        .info-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: var(--primary-dim);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 13px 18px;
+            font-size: 0.86rem;
+            color: var(--text-muted);
+            margin-top: 26px;
+        }
+
+        .info-banner i {
+            color: var(--primary);
+            flex-shrink: 0;
+            margin-top: 1px;
+            font-size: 1rem;
+        }
+
+        .info-banner strong {
+            color: var(--primary-light);
+        }
+
+
+        /* ============================================================
+           SETTINGS ROW (language + gender)
+        ============================================================ */
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+            margin-top: 26px;
+        }
+
+        @media (max-width: 560px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Gender pills */
+        .gender-pills {
+            display: flex;
+            gap: 8px;
+        }
+
+        .gender-pill {
+            flex: 1;
+            padding: 12px 10px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border);
+            background: var(--bg-input);
+            color: var(--text-muted);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.84rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            transition: all 0.22s;
+        }
+
+        .gender-pill.active {
+            border-color: var(--primary);
+            background: var(--primary-dim);
+            color: var(--primary);
+        }
+
+        .gender-pill:not(.active):hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+
+        /* ============================================================
+           EXTRACTED TEXT BOX
+        ============================================================ */
+
+        .extracted-box {
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            overflow: hidden;
+            margin-top: 30px;
+            background: var(--bg-elevated);
+        }
+
+        .extracted-head {
+            background: var(--bg-input);
+            border-bottom: 1px solid var(--border);
+            padding: 13px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .extracted-head-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.84rem;
+            color: var(--text-heading);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chars-badge {
+            background: var(--primary-dim);
+            border: 1px solid var(--border);
+            color: var(--primary);
+            border-radius: 100px;
+            padding: 2px 11px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.68rem;
+        }
+
+        .extracted-body {
+            padding: 18px 20px;
+            max-height: 210px;
+            overflow-y: auto;
+            font-size: 0.87rem;
+            line-height: 1.72;
+            color: var(--text-muted);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .extracted-body::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .extracted-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .extracted-body::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+
+        /* ============================================================
+           ACTION BUTTONS
+        ============================================================ */
+
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 34px;
+        }
+
+        /* Shared button base */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.90rem;
+            padding: 13px 26px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s;
+            white-space: nowrap;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Extract — teal */
+        .btn-extract {
+            background: var(--accent);
+            color: #042f2e;
+            box-shadow: 0 4px 16px rgba(45,212,191,0.25);
+        }
+
+        .btn-extract:hover:not(:disabled) {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+
+        /* Play — amber */
+        .btn-play {
+            background: var(--primary);
+            color: #1c0f00;
+            box-shadow: 0 4px 16px var(--primary-glow);
+        }
+
+        .btn-play:hover:not(:disabled) {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--primary-glow);
+        }
+
+        /* Download — warm dark outline */
+        .btn-download {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-download:hover:not(:disabled) {
+            background: var(--primary-dim);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 560px) {
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+
+        /* ============================================================
+           AUDIO PLAYER
+        ============================================================ */
+
+        .player-box {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 26px;
+            margin-top: 30px;
+
+            /* Warm frosted glass feel */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .player-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .player-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: #1c0f00;
+            flex-shrink: 0;
+        }
+
+        .player-meta h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: var(--text-heading);
+            margin: 0;
+        }
+
+        .player-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: dotPulse 1.6s ease-in-out infinite;
+        }
+
+        .status-dot.paused  { background: #f59e0b; animation: none; }
+        .status-dot.stopped { background: var(--text-muted); animation: none; }
+
+        /* Waveform equaliser bars (playing indicator) */
+        .eq-bars {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            margin-left: auto;
+        }
+
+        .eq-bar {
+            width: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+            opacity: 0.5;
+            animation: eqAnim 0.9s ease-in-out infinite;
+        }
+
+        .eq-bar:nth-child(1) { height: 8px;  animation-delay: 0.0s; }
+        .eq-bar:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+        .eq-bar:nth-child(3) { height: 22px; animation-delay: 0.30s; }
+        .eq-bar:nth-child(4) { height: 16px; animation-delay: 0.45s; }
+        .eq-bar:nth-child(5) { height: 8px;  animation-delay: 0.60s; }
+
+        @keyframes eqAnim {
+            0%, 100% { transform: scaleY(1);    }
+            50%       { transform: scaleY(0.30); }
+        }
+
+        .eq-bars.paused  .eq-bar,
+        .eq-bars.stopped .eq-bar {
+            animation: none;
+            transform: scaleY(0.3);
+            opacity: 0.25;
+        }
+
+        /* Progress bar */
+        .progress-track {
+            width: 100%;
+            height: 5px;
+            background: var(--border);
+            border-radius: 3px;
+            cursor: pointer;
+            margin-bottom: 14px;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            border-radius: 3px;
+            width: 0%;
+            pointer-events: none;
+            transition: width 0.12s linear;
+        }
+
+        /* Playback controls */
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ctrl-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            background: var(--bg-input);
+            color: var(--text-muted);
+            font-size: 0.90rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .ctrl-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .ctrl-btn.main {
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #1c0f00;
+            font-size: 1.05rem;
+            box-shadow: 0 4px 14px var(--primary-glow);
+        }
+
+        .ctrl-btn.main:hover {
+            background: var(--primary-light);
+            transform: scale(1.06);
+        }
+
+        .time-label {
+            margin-left: auto;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.70rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+
+        /* ============================================================
+           PROCESSING INDICATOR
+        ============================================================ */
+
+        .processing-wrap {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            padding: 28px;
+            text-align: center;
+            margin-top: 26px;
+        }
+
+        .spinner-ring {
+            width: 42px;
+            height: 42px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.85s linear infinite;
+            margin: 0 auto 14px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .processing-wrap p {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+
+        /* ============================================================
+           HOW IT WORKS
+        ============================================================ */
+
+        .how-section {
+            background: var(--bg-elevated);
+            border-top:    1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 96px 0;
+        }
+
+        .how-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 32px 26px;
+            text-align: center;
+            height: 100%;
+            transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+        }
+
+        .how-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-7px);
+            box-shadow: 0 18px 44px var(--shadow-card);
+        }
+
+        .how-num {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: var(--primary-dim);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin: 0 auto 20px;
+        }
+
+        .how-card h5 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 1.0rem;
+            color: var(--text-heading);
+            margin-bottom: 10px;
+        }
+
+        .how-card p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.68;
+            margin: 0;
+        }
+
+
+        /* ============================================================
+           FEATURES
+        ============================================================ */
+
+        .features-section {
+            padding: 96px 0;
+        }
+
+        .feat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 30px 26px;
+            height: 100%;
+            transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+        }
+
+        .feat-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-6px);
+            box-shadow: 0 16px 40px var(--shadow-card);
+        }
+
+        .feat-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 13px;
+            background: var(--primary-dim);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .feat-card h5 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 1.0rem;
+            color: var(--text-heading);
+            margin-bottom: 9px;
+        }
+
+        .feat-card p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.68;
+            margin: 0;
+        }
+
+
+        /* ============================================================
+           FOOTER
+        ============================================================ */
+
+        footer {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            padding: 64px 0 38px;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: var(--primary);
+            text-decoration: none;
+            margin-bottom: 14px;
+        }
+
+        footer p {
+            font-size: 0.87rem;
+            color: var(--text-muted);
+            line-height: 1.72;
+        }
+
+        .footer-heading {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.80rem;
+            color: var(--text-heading);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 18px;
+        }
+
+        .footer-links a {
+            display: block;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-bottom: 10px;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .footer-social a {
+            font-size: 1.35rem;
+            color: var(--text-muted);
+            margin-right: 18px;
+            display: inline-block;
+            transition: color 0.2s, transform 0.2s;
+        }
+
+        .footer-social a:hover {
+            color: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .footer-hr {
+            border-color: var(--border);
+            margin: 40px 0 26px;
+        }
+
+        .footer-copy {
+            text-align: center;
+            font-size: 0.80rem;
+            color: var(--text-muted);
+        }
+
+
+        /* ============================================================
+           TOAST NOTIFICATIONS
+        ============================================================ */
+
+        #toast-stack {
+            position: fixed;
+            top: 82px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 20px;
+            box-shadow: 0 8px 32px var(--shadow-deep);
+            font-size: 0.87rem;
+            color: var(--text-main);
+            min-width: 270px;
+            max-width: 360px;
+            animation: toastSlide 0.3s ease;
+        }
+
+        .toast-item.ok    { border-color: rgba(251,146,60,0.35); }
+        .toast-item.error { border-color: rgba(220,50,50,0.30); }
+
+        .toast-item .t-ico { font-size: 1.1rem; flex-shrink: 0; }
+        .toast-item.ok    .t-ico { color: var(--primary); }
+        .toast-item.error .t-ico { color: #e05050; }
+
+        @keyframes toastSlide {
+            from { opacity: 0; transform: translateX(18px); }
+            to   { opacity: 1; transform: translateX(0);    }
+        }
+
+
+        /* ============================================================
+           RESPONSIVE ADJUSTMENTS
+        ============================================================ */
+
+        @media (max-width: 991px) {
+            .hero { padding: 114px 0 90px; }
+        }
+
+        @media (max-width: 767px) {
+            .hero h1     { letter-spacing: -1.5px; }
+            .step-lbl    { display: none; }
+            .how-section,
+            .features-section { padding: 72px 0; }
+        }
+
+        @media (max-width: 480px) {
+            .hero { padding: 104px 0 80px; }
+            .hero h1 { font-size: 2.2rem; letter-spacing: -1px; }
+            .waveform span { width: 2px; }
+        }
+
+    </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+
+    <!-- Toast stack -->
+    <div id="toast-stack"></div>
+
+
+    <!-- ================================================================
+         NAVBAR
+    ================================================================ -->
+    <nav class="navbar">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="fas fa-file-audio me-2"></i>PDF2Audio
+
+            <a class="navbar-brand" href="#">
+                <div class="brand-mark">
+                    <i class="bi bi-file-earmark-music-fill"></i>
+                </div>
+                PDF2Audio
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+
+            <button class="navbar-toggler" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#navMenu"
+                    aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
                     <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('index') }}">Home</a>
+                        <a class="nav-link" href="#converter">Converter</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#how-it-works">How It Works</a>
@@ -37,351 +1557,1060 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#contact">Contact</a>
                     </li>
+                    <li class="nav-item">
+                        <button class="theme-btn" id="themeBtn">
+                            <i class="bi bi-sun-fill" id="themeIcon"></i>
+                            <span id="themeText">Light</span>
+                        </button>
+                    </li>
                 </ul>
             </div>
+
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container text-center">
-            <h1 class="hero-title">Convert PDF to Audio Instantly</h1>
-            <p class="hero-subtitle">Transform your documents, books, and PDFs into high-quality audio files. Listen on the go with our easy-to-use converter.</p>
-            <a href="#converter" class="btn btn-light btn-lg px-5 py-3 mt-3">
-                <i class="fas fa-play-circle me-2"></i>Start Converting Now
+
+    <!-- ================================================================
+         HERO
+    ================================================================ -->
+    <section class="hero">
+        <div class="container hero-inner">
+
+            <div class="hero-badge eyebrow">
+                <span class="pulse-dot"></span>
+                Powered by Voice RSS TTS
+            </div>
+
+            <h1>
+                Turn Any PDF into<br>
+                <em>Beautiful Audio</em>
+            </h1>
+
+            <p class="hero-sub">
+                Upload a document or paste text, choose your language and voice,
+                then listen instantly or download a studio-quality MP3.
+            </p>
+
+            <a href="#converter" class="hero-cta">
+                <i class="bi bi-play-circle-fill"></i>
+                Start Converting
             </a>
+
+            <div class="waveform" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span>
+            </div>
+
         </div>
     </section>
 
-    <!-- Main Converter Section -->
-    <section id="converter" class="container col-10">
-        <!-- Step Indicator -->
-        <div class="step-indicator">
-            <div class="step active">
-                <div class="step-circle">1</div>
-                <div class="step-label">Input</div>
-            </div>
-            <div class="step">
-                <div class="step-circle">2</div>
-                <div class="step-label">Extract</div>
-            </div>
-            <div class="step">
-                <div class="step-circle">3</div>
-                <div class="step-label">Convert</div>
-            </div>
-            <div class="step">
-                <div class="step-circle">4</div>
-                <div class="step-label">Download</div>
-            </div>
-        </div>
+    <div class="hero-fade"></div>
 
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <div class="card">
-                    <div class="card-header text-center">
-                        <h4 class="mb-0"><i class="fas fa-file-audio me-2"></i>PDF to Audio Converter</h4>
+
+    <!-- ================================================================
+         CONVERTER
+    ================================================================ -->
+    <section id="converter" class="main-section">
+        <div class="container col-11 col-lg-9 col-xl-8">
+
+            <!-- Step tracker -->
+            <div class="step-track">
+                <div class="step-item active" id="step1">
+                    <div class="step-circle">1</div>
+                    <div class="step-lbl">Input</div>
+                </div>
+                <div class="step-line" id="conn1"></div>
+                <div class="step-item" id="step2">
+                    <div class="step-circle">2</div>
+                    <div class="step-lbl">Extract</div>
+                </div>
+                <div class="step-line" id="conn2"></div>
+                <div class="step-item" id="step3">
+                    <div class="step-circle">3</div>
+                    <div class="step-lbl">Convert</div>
+                </div>
+                <div class="step-line" id="conn3"></div>
+                <div class="step-item" id="step4">
+                    <div class="step-circle">
+                        <i class="bi bi-check2"></i>
                     </div>
-                    <div class="card-body p-4">
-                        <!-- Input Method Selection -->
-                        <div class="row mb-4">
-                            <div class="col-md-6 mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="inputMethod" id="textInput" checked>
-                                    <label class="form-check-label fw-bold" for="textInput">
-                                        <i class="fas fa-keyboard me-2"></i>Enter Text Directly
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="inputMethod" id="pdfUpload">
-                                    <label class="form-check-label fw-bold" for="pdfUpload">
-                                        <i class="fas fa-file-pdf me-2"></i>Upload PDF File
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Text Input Area -->
-                        <div id="textInputArea">
-                            <div class="mb-4">
-                                <label for="textArea" class="form-label fw-bold">Enter your text here:</label>
-                                <textarea class="form-control text-area" id="textArea" name="text" rows="6" placeholder="Paste or type the text you want to convert to audio...">{{ text if text else '' }}</textarea>
-                                <div class="mt-2 text-end">
-                                    <small class="text-muted" id="charCount">0 characters</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- PDF Upload Area -->
-                        <div id="pdfUploadArea" class="d-none">
-                            <div class="file-upload-area" id="dropArea">
-                                <div class="file-upload-icon">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                </div>
-                                <h5>Drag & Drop your PDF file here</h5>
-                                <p class="text-muted">or click to browse</p>
-                                <input type="file" id="pdfFile" name="pdf_file" class="d-none" accept=".pdf">
-                                <button type="button" class="btn btn-outline-primary mt-3" onclick="document.getElementById('pdfFile').click()">
-                                    <i class="fas fa-folder-open me-2"></i>Choose PDF File
-                                </button>
-                                <p class="mt-3 mb-0 small text-muted">Maximum file size: 10MB</p>
-                            </div>
-                            <div class="mt-3" id="fileInfo" style="display: none;">
-                                <div class="alert alert-info d-flex align-items-center">
-                                    <i class="fas fa-file-pdf me-3 fs-4"></i>
-                                    <div>
-                                        <strong id="fileName"></strong>
-                                        <div class="small" id="fileSize"></div>
-                                    </div>
-                                    <button type="button" class="btn btn-sm btn-outline-danger ms-auto" onclick="removeFile()">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Language Info Tooltip -->
-                        <div class="alert alert-info mt-2">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>Note:</strong> Select the language that matches your document's text. 
-                            This feature reads text aloud, it does not translate text.
-                        </div>
-
-                        <!-- Language Selection -->
-                        <div class="row mb-4">
-                            <div class="col-md-12 mb-3">
-                                <label for="languageSelect" class="form-label fw-bold">
-                                    <i class="fas fa-language me-2"></i>Language
-                                </label>
-                                <select class="form-select" id="languageSelect" name="language">
-                                    <option value="en" {% if language == 'en' %}selected{% endif %}>English</option>
-                                    <option value="es" {% if language == 'es' %}selected{% endif %}>Spanish</option>
-                                    <option value="fr" {% if language == 'fr' %}selected{% endif %}>French</option>
-                                    <option value="de" {% if language == 'de' %}selected{% endif %}>German</option>
-                                    <option value="it" {% if language == 'it' %}selected{% endif %}>Italian</option>
-                                    <option value="pt" {% if language == 'pt' %}selected{% endif %}>Portuguese</option>
-                                    <option value="zh" {% if language == 'zh' %}selected{% endif %}>Chinese</option>
-                                    <option value="ja" {% if language == 'ja' %}selected{% endif %}>Japanese</option>
-                                    <option value="ko" {% if language == 'ko' %}selected{% endif %}>Korean</option>
-                                    <option value="hi" {% if language == 'hi' %}selected{% endif %}>Hindi</option>
-                                    <option value="ru" {% if language == 'ru' %}selected{% endif %}>Russian</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Gender Selection -->
-                        <div class="row mb-4">
-                            <div class="col-md-12 mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-user me-2"></i>Voice Gender
-                                </label>
-                                <div class="d-flex flex-wrap gap-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="voiceGender" id="maleVoice" value="male" checked>
-                                        <label class="form-check-label" for="maleVoice">
-                                            <i class="fas fa-male me-1"></i> Male Voice
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="voiceGender" id="femaleVoice" value="female">
-                                        <label class="form-check-label" for="femaleVoice">
-                                            <i class="fas fa-female me-1"></i> Female Voice
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="voiceGender" id="defaultVoice" value="default">
-                                        <label class="form-check-label" for="defaultVoice">
-                                            <i class="fas fa-robot me-1"></i> Default Voice
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="row mt-4 g-3" id="actionButtonsRow">
-                            <div class="col-md-4 d-none" id="extractBtnCol">
-                                <button class="btn btn-warning w-100 py-2" id="extractBtn">
-                                    <i class="fas fa-file-extract me-2"></i>
-                                    <strong>Extract Text</strong><br>
-                                    <small>From PDF</small>
-                                </button>
-                            </div>
-                            <div class="col-md-6 col-12" id="playPreviewBtnCol">
-                                <button class="btn btn-info w-100 py-2 text-white" id="playPreviewBtn">
-                                    <i class="fas fa-headphones me-2"></i>
-                                    <strong>Play Preview</strong><br>
-                                    <small>Listen Now</small>
-                                </button>
-                            </div>
-                            <div class="col-md-6 col-12" id="downloadBtnCol">
-                                <button class="btn btn-primary w-100 py-2" id="downloadBtn" disabled>
-                                    <i class="fas fa-download me-2"></i>
-                                    <strong>Download</strong><br>
-                                    <small>MP3 File</small>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Extracted Text Preview -->
-                        <div class="mt-5" id="extractedTextSection" style="display: none;">
-                            <h5 class="mb-3"><i class="fas fa-file-alt me-2"></i>Extracted Text Preview</h5>
-                            <div class="preview-text" id="extractedText">
-                                <!-- Extracted text will appear here -->
-                            </div>
-                            <div class="mt-3 text-end">
-                                <small class="text-muted" id="extractedCharCount">0 characters extracted</small>
-                            </div>
-                        </div>
-
-                        <!-- Audio Player -->
-                        <div class="mt-5" id="audioPlayerSection" style="display: none;">
-                            <h5 class="mb-3"><i class="fas fa-music me-2"></i>Generated Audio Preview</h5>
-                            <audio controls class="audio-player" id="audioPlayer">
-                                Your browser does not support the audio element.
-                            </audio>
-                            <div class="mt-3">
-                                <button class="btn btn-outline-success btn-sm" id="playBtn">
-                                    <i class="fas fa-play me-1"></i>Play
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm ms-1" id="pauseBtn">
-                                    <i class="fas fa-pause me-1"></i>Pause
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Processing Indicator -->
-                        <div id="processingIndicator" class="text-center mt-4" style="display: none;">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-2" id="processingText">Processing...</p>
-                        </div>
-                    </div>
+                    <div class="step-lbl">Done</div>
                 </div>
             </div>
+
+            <!-- Main card -->
+            <div class="converter-card">
+
+                <!-- Banner -->
+                <div class="card-banner">
+                    <div class="banner-icon">
+                        <i class="bi bi-file-earmark-music-fill"></i>
+                    </div>
+                    <div class="banner-text">
+                        <h4>PDF to Audio Converter</h4>
+                        <p>Type text or upload a PDF — then listen or download</p>
+                    </div>
+                </div>
+
+                <div class="card-body-inner">
+
+                    <!-- Input method toggle -->
+                    <div class="method-toggle">
+                        <button class="method-btn active" id="btnText"
+                                onclick="switchMethod('text')">
+                            <i class="bi bi-keyboard"></i>
+                            Type / Paste Text
+                        </button>
+                        <button class="method-btn" id="btnPdf"
+                                onclick="switchMethod('pdf')">
+                            <i class="bi bi-file-earmark-pdf-fill"></i>
+                            Upload PDF
+                        </button>
+                    </div>
+
+                    <!-- ── Text panel ── -->
+                    <div id="textPanel">
+                        <label class="field-label" for="textArea">Your text</label>
+                        <textarea class="form-control" id="textArea" rows="7"
+                            placeholder="Paste or type the text you want to convert to audio…">Welcome to PDF2Audio! This is a demonstration of how our text-to-speech converter works. You can paste your own text here or upload a PDF document. After conversion, you can listen directly in your browser or download a high-quality MP3 file.</textarea>
+                        <div class="char-counter">
+                            <span id="charCount">0</span> characters
+                        </div>
+                    </div>
+
+                    <!-- ── PDF panel ── -->
+                    <div id="pdfPanel" style="display: none;">
+
+                        <label class="field-label">Upload PDF</label>
+
+                        <div class="drop-zone" id="dropZone"
+                             onclick="document.getElementById('pdfFile').click()">
+                            <div class="drop-icon">
+                                <i class="bi bi-cloud-upload"></i>
+                            </div>
+                            <h5>Drag & Drop your PDF here</h5>
+                            <p>or click to browse your files</p>
+                            <button class="btn-browse" type="button"
+                                    onclick="event.stopPropagation(); document.getElementById('pdfFile').click()">
+                                <i class="bi bi-folder2-open"></i>
+                                Choose PDF File
+                            </button>
+                            <p class="drop-note">Maximum file size: 10 MB</p>
+                            <input type="file" id="pdfFile" accept=".pdf"
+                                   style="display: none;">
+                        </div>
+
+                        <!-- File info card -->
+                        <div id="fileCard" style="display: none;">
+                            <div class="file-card">
+                                <div class="file-icon">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                                </div>
+                                <div class="file-info">
+                                    <div class="file-name" id="fcName">—</div>
+                                    <div class="file-size" id="fcSize">—</div>
+                                </div>
+                                <button class="btn-remove" onclick="removeFile()"
+                                        aria-label="Remove file">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Info banner -->
+                    <div class="info-banner">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>
+                            <strong>Note:</strong> Select the language that matches
+                            your document's text. This tool reads text aloud —
+                            it does not translate.
+                        </span>
+                    </div>
+
+                    <!-- Settings row -->
+                    <div class="settings-grid">
+
+                        <div>
+                            <label class="field-label" for="langSelect">Language</label>
+                            <select class="form-select" id="langSelect">
+                                <option value="en">🇬🇧 English</option>
+                                <option value="es">🇪🇸 Spanish</option>
+                                <option value="fr">🇫🇷 French</option>
+                                <option value="de">🇩🇪 German</option>
+                                <option value="it">🇮🇹 Italian</option>
+                                <option value="pt">🇵🇹 Portuguese</option>
+                                <option value="zh">🇨🇳 Chinese</option>
+                                <option value="ja">🇯🇵 Japanese</option>
+                                <option value="ko">🇰🇷 Korean</option>
+                                <option value="hi">🇮🇳 Hindi</option>
+                                <option value="ru">🇷🇺 Russian</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="field-label">Voice gender</label>
+                            <div class="gender-pills">
+                                <button class="gender-pill active" id="pillMale"
+                                        onclick="setGender('male')">
+                                    <i class="bi bi-person-fill"></i> Female
+                                </button>
+                                <button class="gender-pill" id="pillFemale"
+                                        onclick="setGender('female')">
+                                    <i class="bi bi-person-fill"></i> Male
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Extracted text preview (PDF mode) -->
+                    <div id="extractedSection" style="display: none;">
+                        <div class="extracted-box">
+                            <div class="extracted-head">
+                                <div class="extracted-head-title">
+                                    <i class="bi bi-file-text"></i>
+                                    Extracted Text
+                                    <span class="chars-badge" id="extractedCount">
+                                        0 chars
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="extracted-body" id="extractedPreview"></div>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="action-row">
+
+                        <button class="action-btn btn-extract" id="btnExtract"
+                                style="display: none;" onclick="extractText()">
+                            <i class="bi bi-file-earmark-text"></i>
+                            Extract Text
+                        </button>
+
+                        <button class="action-btn btn-play" id="btnPlay"
+                                onclick="togglePlay()">
+                            <i class="bi bi-play-fill" id="playIcon"></i>
+                            <span id="playLabel">Play Audio</span>
+                        </button>
+
+                        <button class="action-btn btn-download" id="btnDownload"
+                                onclick="downloadAudio()">
+                            <i class="bi bi-download"></i>
+                            Download MP3
+                        </button>
+
+                    </div>
+
+                    <!-- Processing indicator -->
+                    <div id="processingWrap" style="display: none;">
+                        <div class="processing-wrap">
+                            <div class="spinner-ring"></div>
+                            <p id="processingText">Processing…</p>
+                        </div>
+                    </div>
+
+                    <!-- Audio player -->
+                    <div id="playerSection" style="display: none;">
+                        <div class="player-box">
+
+                            <div class="player-top">
+                                <div class="player-icon">
+                                    <i class="bi bi-music-note-beamed"></i>
+                                </div>
+                                <div class="player-meta">
+                                    <h6>Now Playing</h6>
+                                    <div class="player-status">
+                                        <span class="status-dot" id="statusDot"></span>
+                                        <span id="statusText">Playing…</span>
+                                    </div>
+                                </div>
+                                <div class="eq-bars" id="eqBars">
+                                    <div class="eq-bar"></div>
+                                    <div class="eq-bar"></div>
+                                    <div class="eq-bar"></div>
+                                    <div class="eq-bar"></div>
+                                    <div class="eq-bar"></div>
+                                </div>
+                            </div>
+
+                            <div class="progress-track" id="progressTrack"
+                                 onclick="seekAudio(event)">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+
+                            <div class="player-controls">
+                                <button class="ctrl-btn" onclick="restartAudio()"
+                                        title="Restart">
+                                    <i class="bi bi-skip-start-fill"></i>
+                                </button>
+                                <button class="ctrl-btn main" id="mainPlayBtn"
+                                        onclick="togglePlay()">
+                                    <i class="bi bi-pause-fill" id="mainPlayIcon"></i>
+                                </button>
+                                <button class="ctrl-btn" onclick="stopAudio()"
+                                        title="Stop">
+                                    <i class="bi bi-stop-fill"></i>
+                                </button>
+                                <span class="time-label">
+                                    <span id="elapsed">0:00</span> /
+                                    <span id="duration">—</span>
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
         </div>
     </section>
 
-    <!-- How It Works Section -->
-    <section id="how-it-works" class="how-it-works-section">
+
+    <!-- ================================================================
+         HOW IT WORKS
+    ================================================================ -->
+    <section id="how-it-works" class="how-section">
         <div class="container col-11">
-            <h2 class="text-center mb-5">How It Works</h2>
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-upload"></i>
-                        </div>
-                        <h5>1. Upload or Enter Text</h5>
-                        <p class="text-muted">Upload your PDF file or directly enter the text you want to convert.</p>
+
+            <span class="section-label">Simple process</span>
+            <h2 class="section-title">How It <span>Works</span></h2>
+
+            <div class="row g-4">
+
+                <div class="col-sm-6 col-lg-3">
+                    <div class="how-card">
+                        <div class="how-num">01</div>
+                        <h5>Upload or Enter Text</h5>
+                        <p>Upload a PDF file or paste text directly — we handle both with ease.</p>
                     </div>
                 </div>
-                <div class="col-md-6 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-cogs"></i>
-                        </div>
-                        <h5>2. Extract Text</h5>
-                        <p class="text-muted">Our system extracts text from your PDF with high accuracy.</p>
+
+                <div class="col-sm-6 col-lg-3">
+                    <div class="how-card">
+                        <div class="how-num">02</div>
+                        <h5>Extract Content</h5>
+                        <p>Our system extracts all text from your PDF pages with high accuracy.</p>
                     </div>
                 </div>
-                <div class="col-md-6 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-wave-square"></i>
-                        </div>
-                        <h5>3. Convert to Audio</h5>
-                        <p class="text-muted">Choose language and voice, then convert text to natural-sounding audio.</p>
+
+                <div class="col-sm-6 col-lg-3">
+                    <div class="how-card">
+                        <div class="how-num">03</div>
+                        <h5>Listen in Browser</h5>
+                        <p>Hit Play to hear the full text read aloud instantly using your browser's TTS — no waiting.</p>
                     </div>
                 </div>
-                <div class="col-md-6 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-download"></i>
-                        </div>
-                        <h5>4. Download & Enjoy</h5>
-                        <p class="text-muted">Download your MP3 file and listen anywhere, anytime.</p>
+
+                <div class="col-sm-6 col-lg-3">
+                    <div class="how-card">
+                        <div class="how-num">04</div>
+                        <h5>Download MP3</h5>
+                        <p>Download a high-quality MP3 via Voice RSS TTS. Listen anywhere, anytime.</p>
                     </div>
                 </div>
+
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section id="features" class="container mb-5 col-sm-10 col-11">
-        <h2 class="text-center mb-5">Why Choose PDF2Audio?</h2>
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center p-4">
-                        <i class="fas fa-bolt feature-icon mb-3"></i>
-                        <h5>Fast Conversion</h5>
-                        <p>Convert PDF to audio in seconds with our optimized processing engine.</p>
+
+    <!-- ================================================================
+         FEATURES
+    ================================================================ -->
+    <section id="features" class="features-section">
+        <div class="container col-11">
+
+            <span class="section-label">Why PDF2Audio</span>
+            <h2 class="section-title">Built for <span>Productivity</span></h2>
+
+            <div class="row g-4">
+
+                <div class="col-md-6 col-lg-4">
+                    <div class="feat-card">
+                        <div class="feat-icon">
+                            <i class="bi bi-lightning-charge-fill"></i>
+                        </div>
+                        <h5>Instant Playback</h5>
+                        <p>Play any text immediately in your browser via the Web Speech API — no server round-trips, no waiting.</p>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center p-4">
-                        <i class="fas fa-language feature-icon mb-3"></i>
+
+                <div class="col-md-6 col-lg-4">
+                    <div class="feat-card">
+                        <div class="feat-icon">
+                            <i class="bi bi-translate"></i>
+                        </div>
                         <h5>Multiple Languages</h5>
-                        <p>Support for various languages and natural-sounding voices.</p>
+                        <p>Support for 11+ languages with natural-sounding voices. Choose male or female per session.</p>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center p-4">
-                        <i class="fas fa-shield-alt feature-icon mb-3"></i>
+
+                <div class="col-md-6 col-lg-4">
+                    <div class="feat-card">
+                        <div class="feat-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
                         <h5>Secure & Private</h5>
-                        <p>Your documents are processed securely and deleted after conversion.</p>
+                        <p>Files are processed in memory only and never stored on disk. Your documents stay private.</p>
                     </div>
                 </div>
+
+                <div class="col-md-6 col-lg-4">
+                    <div class="feat-card">
+                        <div class="feat-icon">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+                        <h5>Full PDF Support</h5>
+                        <p>Extracts all text from multi-page PDFs, concatenated seamlessly for full playback and download.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4">
+                    <div class="feat-card">
+                        <div class="feat-icon">
+                            <i class="bi bi-download"></i>
+                        </div>
+                        <h5>MP3 Download</h5>
+                        <p>Download production-quality MP3 files powered by Voice RSS TTS. Perfect for offline listening.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4">
+                    <div class="feat-card">
+                        <div class="feat-icon">
+                            <i class="bi bi-moon-stars-fill"></i>
+                        </div>
+                        <h5>Light & Dark Mode</h5>
+                        <p>Switch between warm light and dark themes. Your preference is saved across sessions automatically.</p>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container col-10">
-            <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <h4 class="mb-3">
-                        <i class="fas fa-file-audio me-2"></i>PDF2Audio
-                    </h4>
-                    <p>Converting documents to audio has never been easier. Transform your reading experience with our powerful text-to-speech converter.</p>
-                </div>
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h5 class="mb-3">Quick Links</h5>
-                    <div class="footer-links d-flex flex-column">
-                        <a href="{{ url_for('index') }}" class="mb-2">Home</a>
-                        <a href="#how-it-works" class="mb-2">How It Works</a>
-                        <a href="#features" class="mb-2">Features</a>
-                        <a href="#contact" class="mb-2">Contact</a>
+
+    <!-- ================================================================
+         FOOTER
+    ================================================================ -->
+    <footer id="contact">
+        <div class="container col-11">
+            <div class="row g-4">
+
+                <div class="col-lg-4 col-md-6">
+                    <a class="footer-brand" href="#">
+                        <div class="brand-mark">
+                            <i class="bi bi-file-earmark-music-fill"></i>
+                        </div>
+                        PDF2Audio
+                    </a>
+                    <p>
+                        Converting documents to audio has never been easier.
+                        Transform your reading experience with our powerful
+                        text-to-speech converter.
+                    </p>
+                    <div class="footer-social mt-3">
+                        <a href="https://x.com/Crafted1638" target="_blank"
+                           aria-label="Twitter / X">
+                            <i class="bi bi-twitter-x"></i>
+                        </a>
+                        <a href="https://github.com/olatideenoch/pdf2audio"
+                           target="_blank" aria-label="GitHub">
+                            <i class="bi bi-github"></i>
+                        </a>
+                        <a href="https://www.linkedin.com/in/olatide-oluwadasimi/"
+                           target="_blank" aria-label="LinkedIn">
+                            <i class="bi bi-linkedin"></i>
+                        </a>
                     </div>
                 </div>
-                <div class="col-lg-3 mb-4">
-                    <h5 class="mb-3" id="contact">Contact Us</h5>
-                    <p><i class="fas fa-envelope me-2"></i> olatideenoch1440@gmail.com</p>
-                    <div class="social-links mt-3">
-                        <a href="https://x.com/Crafted1638" class="text-white me-3"><i class="fab fa-twitter fa-lg"></i></a>
-                        <a href="#" class="text-white me-3"><i class="fab fa-facebook fa-lg"></i></a>
-                        <a href="https://github.com/olatideenoch/pdf2audio.git" class="text-white"><i class="fab fa-github fa-lg"></i></a>
+
+                <div class="col-lg-2 col-md-6">
+                    <div class="footer-heading">Quick Links</div>
+                    <div class="footer-links">
+                        <a href="#">Home</a>
+                        <a href="#how-it-works">How It Works</a>
+                        <a href="#features">Features</a>
+                        <a href="#contact">Contact</a>
                     </div>
                 </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <div class="footer-heading">Contact</div>
+                    <p>
+                        <i class="bi bi-envelope me-2"
+                           style="color: var(--primary);"></i>
+                        olatideenoch1440@gmail.com
+                    </p>
+                </div>
+
             </div>
-            <hr class="mt-4 mb-3" style="border-color: rgba(255,255,255,0.1);">
-            <div class="text-center">
-                <p class="mb-0">&copy; {{ current_year }} PDF2Audio. All rights reserved.</p>
-            </div>
+
+            <hr class="footer-hr">
+            <p class="footer-copy">
+                &copy; {{ current_year }} PDF2Audio. All rights reserved.
+                Built by Olatide Enoch.
+            </p>
+
         </div>
     </footer>
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+
+        /* ============================================================
+           THEME
+        ============================================================ */
+
+        const html      = document.documentElement;
+        const themeBtn  = document.getElementById('themeBtn');
+        const themeIcon = document.getElementById('themeIcon');
+        const themeText = document.getElementById('themeText');
+
+        function applyTheme(t) {
+            html.setAttribute('data-theme', t);
+            localStorage.setItem('p2a-theme', t);
+
+            if (t === 'light') {
+                themeIcon.className = 'bi bi-moon-fill';
+                themeText.textContent = 'Dark';
+            } else {
+                themeIcon.className = 'bi bi-sun-fill';
+                themeText.textContent = 'Light';
+            }
+        }
+
+        applyTheme(localStorage.getItem('p2a-theme') || 'dark');
+
+        themeBtn.addEventListener('click', () => {
+            applyTheme(
+                html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+            );
+        });
+
+
+        /* ============================================================
+           STATE
+        ============================================================ */
+
+        let currentMethod    = 'text';
+        let extractedContent = '';
+        let selectedGender   = 'male';
+        let utterance        = null;
+        let isSpeaking       = false;
+        let isPaused         = false;
+        let progressTimer    = null;
+        let progressValue    = 0;
+        let speechStartTime  = 0;
+        let estimatedDuration = 0;
+
+
+        /* ============================================================
+           CHAR COUNT
+        ============================================================ */
+
+        const textArea  = document.getElementById('textArea');
+        const charCount = document.getElementById('charCount');
+
+        function updateCharCount() {
+            charCount.textContent = textArea.value.length;
+        }
+
+        textArea.addEventListener('input', updateCharCount);
+        updateCharCount();
+
+
+        /* ============================================================
+           INPUT METHOD SWITCH
+        ============================================================ */
+
+        function switchMethod(m) {
+            currentMethod = m;
+
+            document.getElementById('btnText').classList.toggle('active', m === 'text');
+            document.getElementById('btnPdf').classList.toggle('active',  m === 'pdf');
+            document.getElementById('textPanel').style.display    = m === 'text' ? 'block' : 'none';
+            document.getElementById('pdfPanel').style.display     = m === 'pdf'  ? 'block' : 'none';
+            document.getElementById('btnExtract').style.display   = m === 'pdf'  ? 'inline-flex' : 'none';
+            document.getElementById('extractedSection').style.display = 'none';
+
+            extractedContent = '';
+
+            if (m === 'text') {
+                setStep(1);
+            }
+        }
+
+
+        /* ============================================================
+           GENDER SELECTION
+        ============================================================ */
+
+        function setGender(g) {
+            selectedGender = g;
+            document.getElementById('pillMale').classList.toggle('active',   g === 'male');
+            document.getElementById('pillFemale').classList.toggle('active', g === 'female');
+        }
+
+
+        /* ============================================================
+           STEP INDICATOR
+        ============================================================ */
+
+        function setStep(n) {
+            for (let i = 1; i <= 4; i++) {
+                const s = document.getElementById('step' + i);
+                s.classList.remove('active', 'done');
+                if (i < n)       s.classList.add('done');
+                else if (i === n) s.classList.add('active');
+            }
+            for (let i = 1; i <= 3; i++) {
+                const c = document.getElementById('conn' + i);
+                if (c) c.classList.toggle('filled', i < n);
+            }
+        }
+
+
+        /* ============================================================
+           DRAG & DROP / FILE INPUT
+        ============================================================ */
+
+        const dropZone = document.getElementById('dropZone');
+        const pdfFile  = document.getElementById('pdfFile');
+
+        ['dragenter', 'dragover'].forEach(evt =>
+            dropZone.addEventListener(evt, e => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            })
+        );
+
+        ['dragleave', 'drop'].forEach(evt =>
+            dropZone.addEventListener(evt, e => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            })
+        );
+
+        dropZone.addEventListener('drop', e => {
+            const f = e.dataTransfer.files[0];
+            if (f) handleFile(f);
+        });
+
+        pdfFile.addEventListener('change', () => {
+            if (pdfFile.files[0]) handleFile(pdfFile.files[0]);
+        });
+
+        function handleFile(f) {
+            if (f.type !== 'application/pdf') {
+                toast('Please upload a PDF file.', 'error');
+                return;
+            }
+            document.getElementById('fcName').textContent =
+                f.name;
+            document.getElementById('fcSize').textContent =
+                (f.size / 1024 / 1024).toFixed(2) + ' MB';
+            document.getElementById('fileCard').style.display = 'block';
+            setStep(2);
+        }
+
+        function removeFile() {
+            pdfFile.value = '';
+            document.getElementById('fileCard').style.display      = 'none';
+            document.getElementById('extractedSection').style.display = 'none';
+            extractedContent = '';
+            setStep(1);
+        }
+
+
+        /* ============================================================
+           EXTRACT TEXT  (calls Flask /api/extract-text)
+        ============================================================ */
+
+        async function extractText() {
+            if (!pdfFile.files[0]) {
+                toast('Please upload a PDF file first.', 'error');
+                return;
+            }
+
+            showProcessing('Extracting text from PDF…');
+            document.getElementById('btnExtract').disabled = true;
+
+            try {
+                const fd = new FormData();
+                fd.append('pdf_file', pdfFile.files[0]);
+
+                const res  = await fetch('/api/extract-text', { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.success) {
+                    extractedContent = data.text;
+
+                    document.getElementById('extractedPreview').textContent = data.text;
+                    document.getElementById('extractedCount').textContent   = data.text_length + ' chars';
+                    document.getElementById('extractedSection').style.display = 'block';
+
+                    setStep(3);
+                    hideProcessing();
+                    toast('Text extracted successfully!', 'ok');
+                    document.getElementById('extractedSection')
+                            .scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    hideProcessing();
+                    toast('Extraction failed: ' + data.error, 'error');
+                }
+
+            } catch (err) {
+                hideProcessing();
+                toast('Failed to extract text. Please try again.', 'error');
+            } finally {
+                document.getElementById('btnExtract').disabled = false;
+            }
+        }
+
+
+        /* ============================================================
+           GET CURRENT TEXT
+        ============================================================ */
+
+        function getCurrentText() {
+            return currentMethod === 'text'
+                ? textArea.value.trim()
+                : extractedContent.trim();
+        }
+
+
+        /* ============================================================
+           LANGUAGE CODE HELPER
+        ============================================================ */
+
+        function getLangCode() {
+            const map = {
+                en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE',
+                it: 'it-IT', pt: 'pt-PT', zh: 'zh-CN', ja: 'ja-JP',
+                ko: 'ko-KR', hi: 'hi-IN', ru: 'ru-RU'
+            };
+            return map[document.getElementById('langSelect').value] || 'en-US';
+        }
+
+
+        /* ============================================================
+           WEB SPEECH API — PLAY / PAUSE / STOP / SEEK
+        ============================================================ */
+
+        function togglePlay() {
+            const text = getCurrentText();
+            if (!text) {
+                toast('Please enter or extract some text first.', 'error');
+                return;
+            }
+
+            if (!('speechSynthesis' in window)) {
+                toast('Your browser does not support speech synthesis. Try Chrome or Edge.', 'error');
+                return;
+            }
+
+            if (isPaused) {
+                window.speechSynthesis.resume();
+                isPaused = false;
+                resumeProgress();
+                updatePlayUI('playing');
+                return;
+            }
+
+            if (isSpeaking) {
+                window.speechSynthesis.pause();
+                isPaused = true;
+                pauseProgress();
+                updatePlayUI('paused');
+                return;
+            }
+
+            startSpeech(text);
+        }
+
+        function startSpeech(text) {
+            window.speechSynthesis.cancel();
+
+            utterance       = new SpeechSynthesisUtterance(text);
+            utterance.lang  = getLangCode();
+            utterance.rate  = 1;
+            utterance.pitch = selectedGender === 'female' ? 1.3 : 0.9;
+
+            // Try to match a browser voice to the selected gender
+            const voices   = window.speechSynthesis.getVoices();
+            const langBase = getLangCode().split('-')[0];
+            const filtered = voices.filter(v => v.lang.startsWith(langBase));
+
+            if (filtered.length) {
+                const pick = selectedGender === 'female'
+                    ? (filtered.find(v => /female|woman|girl/i.test(v.name)) || filtered[0])
+                    : (filtered.find(v => /male|man|guy/i.test(v.name))   || filtered[filtered.length - 1]);
+                utterance.voice = pick;
+            }
+
+            estimatedDuration = Math.max(text.length / 14, 2);
+            progressValue     = 0;
+            speechStartTime   = Date.now();
+
+            utterance.onstart = () => {
+                isSpeaking = true;
+                isPaused   = false;
+                showPlayer();
+                updatePlayUI('playing');
+                startProgress();
+                setStep(4);
+            };
+
+            utterance.onend = () => {
+                isSpeaking = false;
+                isPaused   = false;
+                stopProgress(true);
+                updatePlayUI('stopped');
+            };
+
+            utterance.onerror = e => {
+                if (e.error === 'interrupted') return;
+                isSpeaking = false;
+                isPaused   = false;
+                stopProgress(false);
+                toast('Speech error: ' + e.error, 'error');
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function stopAudio() {
+            window.speechSynthesis.cancel();
+            isSpeaking = false;
+            isPaused   = false;
+            stopProgress(false);
+            updatePlayUI('stopped');
+        }
+
+        function restartAudio() {
+            stopAudio();
+            const text = getCurrentText();
+            if (text) setTimeout(() => startSpeech(text), 100);
+        }
+
+        function seekAudio(e) {
+            if (!utterance || !isSpeaking) return;
+
+            const rect = e.currentTarget.getBoundingClientRect();
+            const pct  = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+            const text = getCurrentText();
+
+            window.speechSynthesis.cancel();
+            isSpeaking    = false;
+            progressValue = pct * 100;
+            document.getElementById('progressFill').style.width = progressValue + '%';
+
+            setTimeout(() => startSpeech(text.slice(Math.floor(pct * text.length))), 80);
+        }
+
+        function updatePlayUI(state) {
+            const playIcon    = document.getElementById('playIcon');
+            const playLabel   = document.getElementById('playLabel');
+            const mainPlayIcon = document.getElementById('mainPlayIcon');
+            const statusDot   = document.getElementById('statusDot');
+            const statusText  = document.getElementById('statusText');
+            const eqBars      = document.getElementById('eqBars');
+
+            if (state === 'playing') {
+                playIcon.className     = 'bi bi-pause-fill';
+                playLabel.textContent  = 'Pause';
+                mainPlayIcon.className = 'bi bi-pause-fill';
+                statusDot.className    = 'status-dot';
+                statusText.textContent = 'Playing…';
+                eqBars.className       = 'eq-bars';
+
+            } else if (state === 'paused') {
+                playIcon.className     = 'bi bi-play-fill';
+                playLabel.textContent  = 'Resume';
+                mainPlayIcon.className = 'bi bi-play-fill';
+                statusDot.className    = 'status-dot paused';
+                statusText.textContent = 'Paused';
+                eqBars.className       = 'eq-bars paused';
+
+            } else {
+                playIcon.className     = 'bi bi-play-fill';
+                playLabel.textContent  = 'Play Audio';
+                mainPlayIcon.className = 'bi bi-play-fill';
+                statusDot.className    = 'status-dot stopped';
+                statusText.textContent = 'Stopped';
+                eqBars.className       = 'eq-bars stopped';
+            }
+        }
+
+
+        /* ============================================================
+           PROGRESS BAR SIMULATION
+        ============================================================ */
+
+        function startProgress() {
+            clearInterval(progressTimer);
+            progressTimer = setInterval(() => {
+                const elapsed = (Date.now() - speechStartTime) / 1000;
+                progressValue = Math.min((elapsed / estimatedDuration) * 100, 98);
+                document.getElementById('progressFill').style.width = progressValue + '%';
+                document.getElementById('elapsed').textContent  = fmtTime(elapsed);
+                document.getElementById('duration').textContent = fmtTime(estimatedDuration);
+            }, 300);
+        }
+
+        function pauseProgress() {
+            clearInterval(progressTimer);
+        }
+
+        function resumeProgress() {
+            speechStartTime = Date.now() - (progressValue / 100) * estimatedDuration * 1000;
+            startProgress();
+        }
+
+        function stopProgress(finished) {
+            clearInterval(progressTimer);
+            if (finished) {
+                document.getElementById('progressFill').style.width = '100%';
+                document.getElementById('elapsed').textContent = fmtTime(estimatedDuration);
+            }
+        }
+
+        function fmtTime(s) {
+            const m  = Math.floor(s / 60);
+            const sc = Math.floor(s % 60);
+            return m + ':' + String(sc).padStart(2, '0');
+        }
+
+        function showPlayer() {
+            const section = document.getElementById('playerSection');
+            section.style.display = 'block';
+            section.scrollIntoView({ behavior: 'smooth' });
+        }
+
+
+        /* ============================================================
+           DOWNLOAD MP3  (calls Flask /api/download-audio via Voice RSS)
+        ============================================================ */
+
+        async function downloadAudio() {
+            const text = getCurrentText();
+            if (!text) {
+                toast('Please enter or extract some text first.', 'error');
+                return;
+            }
+
+            showProcessing('Generating MP3 via Voice RSS…');
+            document.getElementById('btnDownload').disabled = true;
+
+            try {
+                const res = await fetch('/api/download-audio', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text,
+                        language: document.getElementById('langSelect').value,
+                        gender:   selectedGender
+                    })
+                });
+
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url  = URL.createObjectURL(blob);
+                    const a    = document.createElement('a');
+
+                    a.href = url;
+
+                    const cd = res.headers.get('Content-Disposition');
+                    let fname = 'pdf2audio.mp3';
+                    if (cd) {
+                        const m = cd.match(/filename="(.+)"/);
+                        if (m) fname = m[1];
+                    }
+
+                    a.download = fname;
+                    document.body.appendChild(a);
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    hideProcessing();
+                    toast('MP3 downloaded successfully!', 'ok');
+                    setStep(4);
+
+                } else {
+                    const err = await res.json();
+                    hideProcessing();
+                    toast('Download failed: ' + (err.error || 'Unknown error'), 'error');
+                }
+
+            } catch (err) {
+                hideProcessing();
+                toast('Download failed. Please try again.', 'error');
+            } finally {
+                document.getElementById('btnDownload').disabled = false;
+            }
+        }
+
+
+        /* ============================================================
+           PROCESSING UI
+        ============================================================ */
+
+        function showProcessing(msg) {
+            document.getElementById('processingText').textContent    = msg;
+            document.getElementById('processingWrap').style.display  = 'block';
+        }
+
+        function hideProcessing() {
+            document.getElementById('processingWrap').style.display = 'none';
+        }
+
+
+        /* ============================================================
+           TOAST NOTIFICATIONS
+        ============================================================ */
+
+        function toast(msg, type = 'ok') {
+            const stack = document.getElementById('toast-stack');
+            const el    = document.createElement('div');
+            const ico   = type === 'ok'
+                ? 'bi-check-circle-fill'
+                : 'bi-exclamation-circle-fill';
+
+            el.className = 'toast-item ' + type;
+            el.innerHTML = `
+                <i class="bi ${ico} t-ico"></i>
+                <span>${msg}</span>
+            `;
+
+            stack.appendChild(el);
+            setTimeout(() => el.remove(), 4600);
+        }
+
+
+        /* ============================================================
+           INITIALISE
+        ============================================================ */
+
+        document.addEventListener('DOMContentLoaded', () => {
+            switchMethod('text');
+
+            // Pre-load browser voices
+            window.speechSynthesis.getVoices();
+            if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                window.speechSynthesis.onvoiceschanged = () =>
+                    window.speechSynthesis.getVoices();
+            }
+        });
+
+    </script>
 </body>
 </html>
