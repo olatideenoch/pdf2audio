@@ -1,0 +1,20 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" rx="40" fill="#111008"/>
+  <rect x="70" y="70" width="1060" height="490" rx="32" fill="url(#bg)"/>
+  <rect x="118" y="118" width="300" height="394" rx="28" fill="#FFF8F0"/>
+  <path d="M180 212C180 188.804 198.804 170 222 170H344C367.196 170 386 188.804 386 212V420C386 443.196 367.196 462 344 462H222C198.804 462 180 443.196 180 420V212Z" fill="#111008"/>
+  <path d="M220 226V400" stroke="#FB923C" stroke-width="24" stroke-linecap="round"/>
+  <path d="M278 226V400" stroke="#2DD4BF" stroke-width="24" stroke-linecap="round"/>
+  <path d="M248 208V418" stroke="#FDBA74" stroke-width="28" stroke-linecap="round"/>
+  <path d="M465 220H900" stroke="#FFF8F0" stroke-width="20" stroke-linecap="round"/>
+  <path d="M465 290H840" stroke="#FFF8F0" stroke-opacity="0.85" stroke-width="20" stroke-linecap="round"/>
+  <path d="M465 360H780" stroke="#FFF8F0" stroke-opacity="0.7" stroke-width="20" stroke-linecap="round"/>
+  <text x="465" y="470" fill="#FFF8F0" font-family="Arial, sans-serif" font-size="66" font-weight="700">PDF2Audio</text>
+  <text x="465" y="525" fill="#FDBA74" font-family="Arial, sans-serif" font-size="34">Convert PDF to MP3 and audio in seconds</text>
+  <defs>
+    <linearGradient id="bg" x1="70" y1="70" x2="1130" y2="560" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A1610"/>
+      <stop offset="1" stop-color="#2A2013"/>
+    </linearGradient>
+  </defs>
+</svg>

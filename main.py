@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, jsonify
+from flask import Flask, render_template, request, send_file, jsonify, Response
 from PyPDF2 import PdfReader
 import io
 import os
@@ -11,6 +11,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret-key-goes-here'
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB
 
+SITE_URL = os.environ.get("SITE_URL", "https://pdf2audio-np6h.onrender.com")
 VOICE_RSS_API_KEY = os.environ.get("VOICE_RSS_API_KEY")
 
 # Voice RSS language + voice codes per language and gender
@@ -138,6 +139,7 @@ def index():
         current_year=datetime.now().year,
         text=request.args.get("text", ""),
         language=request.args.get("language", "en"),
+        site_url=SITE_URL,
     )
 
 
@@ -208,6 +210,27 @@ def api_download_audio():
         print(f"download-audio error: {e}")
         print(traceback.format_exc())
         return jsonify({"success": False, "error": str(e)})
+
+@app.route("/robots.txt")
+def robots():
+    content = f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n"
+    return Response(content, mimetype="text/plain")
+
+
+@app.route("/sitemap.xml")
+def sitemap():
+    xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>{SITE_URL}/</loc>
+    <lastmod>{datetime.now().strftime('%Y-%m-%d')}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+'''
+    return Response(xml, mimetype="application/xml")
+
 
 @app.route("/health")
 def health():
